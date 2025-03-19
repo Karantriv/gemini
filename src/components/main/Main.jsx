@@ -16,7 +16,7 @@ const Main = () => {
   return (
     <div className='main'>
       <div className="nav">
-        <p onClick={()=>navigate("/LoginSignup")}>Gemini</p>
+        <p onClick={()=>navigate("/login-signup")}>Gemini</p>
         <img src={assets.user_icon} alt="" />
       </div>
       <div className="main-container">

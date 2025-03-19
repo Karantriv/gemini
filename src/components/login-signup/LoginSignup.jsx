@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./LoginSignup.css";
-
+import gemini_icon from "../../assets/gemini_icon.png";
 
 const LoginSignup = () => {
   const [isLogin, setIsLogin] = useState(true);
