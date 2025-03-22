@@ -1,58 +1,21 @@
-import React, { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../firebase/AuthContext";
-import { Context } from "../../context/Context";
-import "./LoginSignup.css";
-import gemini_icon from "../../assets/gemini_icon.png";
+import React, { useState } from "react";
+import { useAuth } from '../firebase/AuthContext';
+import "./login-signup/LoginSingup.css";
+import gemini_icon from "../assets/gemini_icon.png";
 
-const LoginSignup = () => {
-  const navigate = useNavigate();
-  const { login, signup, loginWithGoogle, loginWithGithub } = useAuth();
-  const { setUserName } = useContext(Context);
+const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+1");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [savedCredentials, setSavedCredentials] = useState({});
-
-  // Load saved credentials on component mount
-  useEffect(() => {
-    const savedCredsString = localStorage.getItem("savedCredentials");
-    if (savedCredsString) {
-      setSavedCredentials(JSON.parse(savedCredsString));
-    }
-  }, []);
-
-  // Check for saved password when email changes
-  useEffect(() => {
-    if (isLogin && email && savedCredentials[email]) {
-      setPassword(savedCredentials[email].password);
-      if (savedCredentials[email].name) {
-        setName(savedCredentials[email].name);
-      }
-    }
-  }, [email, savedCredentials, isLogin]);
+  const { login, loginWithGoogle, loginWithGithub, signup } = useAuth();
 
   const handleToggle = () => {
     setIsLogin(!isLogin);
-    setErrors({});
-    clearForm();
-  };
-
-  const clearForm = () => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    setPhone("");
-  };
-
-  const validateName = (name) => {
-    return name.length >= 2;
+    setErrors({}); // Clear errors on toggle
   };
 
   const validateEmail = (email) => {
@@ -73,10 +36,6 @@ const LoginSignup = () => {
     e.preventDefault();
     const newErrors = {};
 
-    if (!isLogin && !validateName(name)) {
-      newErrors.name = "Name must be at least 2 characters";
-    }
-    
     if (!validateEmail(email)) {
       newErrors.email = "Invalid email address";
     }
@@ -96,29 +55,17 @@ const LoginSignup = () => {
       setLoading(true);
       setErrors({});
       
-      // Save credentials if Remember Me is checked
-      if (rememberMe) {
-        const updatedCredentials = {
-          ...savedCredentials,
-          [email]: { password, name }
-        };
-        localStorage.setItem("savedCredentials", JSON.stringify(updatedCredentials));
-        setSavedCredentials(updatedCredentials);
-      }
-      
       if (isLogin) {
         await login(email, password);
-        setUserName(name || "User");
       } else {
         await signup(email, password);
-        setUserName(name || "User");
       }
       
-      navigate("/");
+      setEmail("");
+      setPassword("");
+      setPhone("");
     } catch (error) {
-      setErrors({
-        submit: error.message || "An error occurred during authentication"
-      });
+      setErrors({ submit: error.message });
     } finally {
       setLoading(false);
     }
@@ -129,12 +76,8 @@ const LoginSignup = () => {
       setLoading(true);
       setErrors({});
       await loginWithGoogle();
-      setUserName(name || "User");
-      navigate("/");
     } catch (error) {
-      setErrors({
-        submit: error.message || "An error occurred during Google sign-in"
-      });
+      setErrors({ submit: error.message });
     } finally {
       setLoading(false);
     }
@@ -145,12 +88,8 @@ const LoginSignup = () => {
       setLoading(true);
       setErrors({});
       await loginWithGithub();
-      setUserName(name || "User");
-      navigate("/");
     } catch (error) {
-      setErrors({
-        submit: error.message || "An error occurred during GitHub sign-in"
-      });
+      setErrors({ submit: error.message });
     } finally {
       setLoading(false);
     }
@@ -172,16 +111,6 @@ const LoginSignup = () => {
               <form onSubmit={handleSubmit} className="login-form">
                 <div className="input-group">
                   <input
-                    type="text"
-                    placeholder="Enter your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={errors.name ? "error" : ""}
-                  />
-                  {errors.name && <span className="error-message">{errors.name}</span>}
-                </div>
-                <div className="input-group">
-                  <input
                     type="email"
                     placeholder="Enter your email"
                     value={email}
@@ -200,19 +129,23 @@ const LoginSignup = () => {
                   />
                   {errors.password && <span className="error-message">{errors.password}</span>}
                 </div>
+
                 <div className="remember-forgot">
                   <label>
-                    <input 
-                      type="checkbox" 
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    /> Remember&nbsp;Me
+                    <input type="checkbox" /> Remember Me
                   </label>
                   <a href="/forgot-password">Forgot Password?</a>
                 </div>
-                <button type="submit" className="submit-button" disabled={loading}>
-                  {loading ? "Logging in..." : "Login"}
-                </button>
+
+                <div className="butt">
+                  <button
+                    type="submit"
+                    className="submit-button"
+                    disabled={loading}
+                  >
+                    {loading ? "Loading..." : "Login"}
+                  </button>
+                </div>
               </form>
             </>
           ) : (
@@ -220,16 +153,6 @@ const LoginSignup = () => {
               <h2>Create an account</h2>
               <p>Join us to get started.</p>
               <form onSubmit={handleSubmit} className="signup-form">
-                <div className="input-group">
-                  <input
-                    type="text"
-                    placeholder="Enter your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={errors.name ? "error" : ""}
-                  />
-                  {errors.name && <span className="error-message">{errors.name}</span>}
-                </div>
                 <div className="input-group">
                   <input
                     type="email"
@@ -256,8 +179,8 @@ const LoginSignup = () => {
                       value={countryCode}
                       onChange={(e) => setCountryCode(e.target.value)}
                     >
-                      <option value="+91">+91 (IN)</option>
                       <option value="+1">+1 (US)</option>
+                      <option value="+91">+91 (IN)</option>
                     </select>
                     <input
                       type="text"
@@ -269,56 +192,44 @@ const LoginSignup = () => {
                   </div>
                   {errors.phone && <span className="error-message">{errors.phone}</span>}
                 </div>
-                <button type="submit" className="submit-button" disabled={loading}>
-                  {loading ? "Creating account..." : "Sign up"}
-                </button>
+
+                <div className="butt">
+                  <button
+                    type="submit"
+                    className="submit-button"
+                    disabled={loading}
+                  >
+                    {loading ? "Loading..." : "Sign Up"}
+                  </button>
+                </div>
               </form>
             </>
           )}
-        </div>
 
-        {errors.submit && (
-          <div className="error-message submit-error" style={{ textAlign: "center", marginTop: "10px" }}>
-            {errors.submit}
+          <div className="toggle-text">
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <span className="toggle-link" onClick={handleToggle}>
+              {isLogin ? "Sign up" : "Login"}
+            </span>
           </div>
-        )}
 
-        <div className="additional-options">
           <div className="social-login">
-            <button 
-              className="google-button" 
+            <button
               onClick={handleGoogleSignIn}
               disabled={loading}
+              className="google-button"
             >
               <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
               Sign in with Google
             </button>
-            <button 
-              className="github-button" 
+            <button
               onClick={handleGithubSignIn}
               disabled={loading}
+              className="github-button"
             >
               <img src="https://img.icons8.com/ios-filled/50/000000/github.png" alt="GitHub" />
               Sign in with GitHub
             </button>
-          </div>
-
-          <div className="toggle-text">
-            {isLogin ? (
-              <>
-                Don't have an account?{" "}
-                <span className="toggle-link" onClick={handleToggle}>
-                  Sign up
-                </span>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <span className="toggle-link" onClick={handleToggle}>
-                  Login
-                </span>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -326,4 +237,4 @@ const LoginSignup = () => {
   );
 };
 
-export default LoginSignup;
+export default Login; 
